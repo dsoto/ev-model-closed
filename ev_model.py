@@ -43,12 +43,15 @@ def define_equations_dc(Ib, Ic, Vb, Vc, Rm, k, omega, Rb, Voc, Imm, Ibm, torque)
 
 def define_equations_3p(Ib, Ic, Vb, Vc, Rm, k, omega, Rb, Voc, Imm, Ibm, torque):
 
+    power_eq = sympy.Eq(Vb * Ib, Vc * Ic)                    # controller energy balance
     power_eq = sympy.Eq(Vb * Ib, Vc * Ic * 3 / 2)                    # controller energy balance
     # reducing k by sqrt(2) makes a good fit but I'm expecting sqrt(3) from line to line models
-    controller_loop = sympy.Eq(Vc, Ic * Rm + k * omega / sympy.sqrt(2))              # controller side voltage loop
+    controller_loop = sympy.Eq(Vc, Ic * Rm + k * omega)              # controller side voltage loop
+    controller_loop = sympy.Eq(Vc, Ic * Rm + k * omega / sympy.sqrt(3))              # controller side voltage loop
     battery_loop = sympy.Eq(Voc, Ib * Rb + Vb)                       # battery side voltage loop
     regime_1_eq = sympy.Eq(Ic, Imm)
     regime_2_eq = sympy.Eq(Ib, Ibm)
+    regime_3_eq = sympy.Eq(Vb, Vc)
     regime_3_eq = sympy.Eq(Vb / sympy.sqrt(3), Vc)
     return power_eq, controller_loop, battery_loop, regime_1_eq, regime_2_eq, regime_3_eq
 
