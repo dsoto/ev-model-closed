@@ -31,23 +31,25 @@ def define_variables():
 
     return Ib, Ic, Vb, Vc, Rm, k, omega, Rb, Voc, Imm, Ibm, torque
 
-def define_equations(Ib, Ic, Vb, Vc, Rm, k, omega, Rb, Voc, Imm, Ibm, torque):
+def define_equations_dc(Ib, Ic, Vb, Vc, Rm, k, omega, Rb, Voc, Imm, Ibm, torque):
 
-    power_eq = sympy.Eq(Vb * Ib, Vc * Ic * 3 / 2)                    # controller energy balance
     power_eq = sympy.Eq(Vb * Ib, Vc * Ic)                           # controller energy balance
-    # reducing k by sqrt(2) makes a good fit but I'm expecting sqrt(3) from line to line models
-    controller_loop = sympy.Eq(Vc, Ic * Rm + k * omega / sympy.sqrt(2))              # controller side voltage loop
     controller_loop = sympy.Eq(Vc, Ic * Rm + k * omega)              # controller side voltage loop
     battery_loop = sympy.Eq(Voc, Ib * Rb + Vb)                       # battery side voltage loop
-    # set controller current to max for first regime solution
     regime_1_eq = sympy.Eq(Ic, Imm)
-    # TODO: should Ib = Ibm regime be here?
     regime_2_eq = sympy.Eq(Ib, Ibm)
-    # set battery and peak motor voltages equal for last regime
-    #regime_3_eq = sympy.Eq(Vb / sympy.sqrt(3), Vc)
     regime_3_eq = sympy.Eq(Vb , Vc)
-    #regime_3_eq = sympy.Eq(Ib, Ic)
+    return power_eq, controller_loop, battery_loop, regime_1_eq, regime_2_eq, regime_3_eq
 
+def define_equations_3p(Ib, Ic, Vb, Vc, Rm, k, omega, Rb, Voc, Imm, Ibm, torque):
+
+    power_eq = sympy.Eq(Vb * Ib, Vc * Ic * 3 / 2)                    # controller energy balance
+    # reducing k by sqrt(2) makes a good fit but I'm expecting sqrt(3) from line to line models
+    controller_loop = sympy.Eq(Vc, Ic * Rm + k * omega / sympy.sqrt(2))              # controller side voltage loop
+    battery_loop = sympy.Eq(Voc, Ib * Rb + Vb)                       # battery side voltage loop
+    regime_1_eq = sympy.Eq(Ic, Imm)
+    regime_2_eq = sympy.Eq(Ib, Ibm)
+    regime_3_eq = sympy.Eq(Vb / sympy.sqrt(3), Vc)
     return power_eq, controller_loop, battery_loop, regime_1_eq, regime_2_eq, regime_3_eq
 
 def solve_equations(power_eq, controller_loop, battery_loop, regime_1_eq, regime_2_eq, regime_3_eq,
@@ -87,8 +89,8 @@ def generate_currents(ev_system, phase_limit, battery_limit, duty_limit, Ib, Ic,
     Ic_1 = list(map(sympy.lambdify(omega, phase_limit[Ic].subs(ev_system)), regime_1_omega))
     Ib_2 = list(map(sympy.lambdify(omega, battery_limit[Ib].subs(ev_system)), regime_2_omega))
     Ic_2 = list(map(sympy.lambdify(omega, battery_limit[Ic].subs(ev_system)), regime_2_omega))   # battery limited phase current
-    Ic_3 = list(map(sympy.lambdify(omega, duty_limit[Ib].subs(ev_system)), regime_3_omega))
-    Ib_3 = list(map(sympy.lambdify(omega, duty_limit[Ic].subs(ev_system)), regime_3_omega))
+    Ib_3 = list(map(sympy.lambdify(omega, duty_limit[Ib].subs(ev_system)), regime_3_omega))
+    Ic_3 = list(map(sympy.lambdify(omega, duty_limit[Ic].subs(ev_system)), regime_3_omega))
     Ib_values = np.hstack((np.array(Ib_1), np.array(Ib_2), np.array(Ib_3)))
     Ic_values = np.hstack((np.array(Ic_1), np.array(Ic_2), np.array(Ic_3)))
     omega_values = np.hstack((regime_1_omega, regime_2_omega, regime_3_omega))
@@ -106,8 +108,8 @@ def generate_voltages(ev_system, phase_limit, battery_limit, duty_limit, Ib, Ic,
     Vc_1 = list(map(sympy.lambdify(omega, phase_limit[Vc].subs(ev_system)), regime_1_omega))
     Vb_2 = list(map(sympy.lambdify(omega, battery_limit[Vb].subs(ev_system)), regime_2_omega))
     Vc_2 = list(map(sympy.lambdify(omega, battery_limit[Vc].subs(ev_system)), regime_2_omega))   # battery limited phase current
-    Vc_3 = list(map(sympy.lambdify(omega, duty_limit[Vb].subs(ev_system)), regime_3_omega))
-    Vb_3 = list(map(sympy.lambdify(omega, duty_limit[Vc].subs(ev_system)), regime_3_omega))
+    Vc_3 = list(map(sympy.lambdify(omega, duty_limit[Vc].subs(ev_system)), regime_3_omega))
+    Vb_3 = list(map(sympy.lambdify(omega, duty_limit[Vb].subs(ev_system)), regime_3_omega))
 
     Vb_values = np.hstack((np.array(Vb_1), np.array(Vb_2), np.array(Vb_3)))
     Vc_values = np.hstack((np.array(Vc_1), np.array(Vc_2), np.array(Vc_3)))
