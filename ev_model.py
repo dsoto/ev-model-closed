@@ -75,7 +75,7 @@ def calculate_crossover_frequencies(phase_limit, battery_limit, duty_limit, ev_s
     omega_1_2 = crossover_1_2.evalf(subs=ev_system)
     crossover_2_3 = sympy.solve(sympy.Eq(battery_limit[Ic], duty_limit[Ic]), omega)[0]
     omega_2_3 = crossover_2_3.evalf(subs=ev_system)
-    crossover_3 = sympy.solve(sympy.Eq(0, duty_limit[Ic]), omega)[0]
+    crossover_3 = sympy.solve(sympy.Eq(duty_limit[Ic], 0), omega)[0]
     omega_3 = crossover_3.evalf(subs=ev_system)
     assert 0 < omega_1_2 < omega_2_3 < omega_3
     return omega_1_2, omega_2_3, omega_3
@@ -83,7 +83,6 @@ def calculate_crossover_frequencies(phase_limit, battery_limit, duty_limit, ev_s
 def generate_currents(ev_system, phase_limit, battery_limit, duty_limit, Ib, Ic, Vb, Vc, Rm, k, omega, Rb, Voc, Imm, Ibm, torque):
     omega_1_2, omega_2_3, omega_3 = calculate_crossover_frequencies(phase_limit, battery_limit, duty_limit, ev_system,
                                                                    Ib, Ic, Vb, Vc, Rm, k, omega, Rb, Voc, Imm, Ibm, torque)
-
     regime_1_omega = np.linspace(0, float(omega_1_2), 100, endpoint=False)
     regime_2_omega = np.linspace(float(omega_1_2), float(omega_2_3), 100, endpoint=False)
     regime_3_omega = np.linspace(float(omega_2_3), float(omega_3), 100)
